@@ -35,7 +35,12 @@ function initClient() returns Client|error {
 isolated function testChatCompletion() returns error? {
     CreateChatCompletionRequest request = {
         model: "gpt-4o-mini",
-        messages: [{"role": "user", "content": "This is a test message"}]
+        messages: [
+            {
+                role: "user",
+                content: "This is a test message"
+            }
+        ]
     };
     CreateChatCompletionResponse response = check openAIChat->/chat/completions.post(request);
     test:assertTrue(response.choices.length() > 0, msg = "Expected at least one completion choice");

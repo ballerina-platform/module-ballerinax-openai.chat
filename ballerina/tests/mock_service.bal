@@ -21,28 +21,30 @@ listener http:Listener httpListener = new (9090);
 
 http:Service mockService = service object {
     resource function post chat/completions(@http:Payload CreateChatCompletionRequest payload) returns CreateChatCompletionResponse|http:BadRequest {
-
-        // Validate the request payload
-        if payload.messages[0]["content"].toString() is "" || payload.model.toString() is "" {
-            return http:BAD_REQUEST;
-        }
-
         // Mock response
         CreateChatCompletionResponse response = {
             id: "chatcmpl-00000",
             choices: [
                 {
-                    finish_reason: "stop",
+                    finishReason: "stop",
                     index: 0,
-                    message: {"content": "Test message received! How can I assist you today?", "role": "assistant", "refusal": null},
-                    logprobs: null
+                    message: {
+                        content: "Test message received! How can I assist you today?",
+                        role: "assistant",
+                        refusal: ()
+                    },
+                    logprobs: ()
                 }
             ],
             created: 1723091495,
             model: "gpt-4o-mini-2024-07-18",
-            system_fingerprint: "fp_48196bc67a",
-            "object": "chat.completion",
-            "usage": {"completion_tokens": 11, "prompt_tokens": 13, "total_tokens": 24}
+            systemFingerprint: "fp_48196bc67a",
+            'object: "chat.completion",
+            usage: {
+                completionTokens: 11,
+                promptTokens: 13,
+                totalTokens: 24
+            }
         };
         return response;
     }
@@ -50,7 +52,7 @@ http:Service mockService = service object {
 
 function init() returns error? {
     if isLiveServer {
-        log:printInfo("Skiping mock server initialization as the tests are running on live server");
+        log:printInfo("Skipping mock server initialization as the tests are running on live server");
         return;
     }
 
