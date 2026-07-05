@@ -92,7 +92,7 @@ public isolated client class Client {
     # + completion_id - The ID of the chat completion to update.
     # + headers - Headers to be sent with the request 
     # + return - A chat completion 
-    resource isolated function post chat/completions/[string completion_id](completions_completion_id_body payload, map<string|string[]> headers = {}) returns CreateChatCompletionResponse|error {
+    resource isolated function post chat/completions/[string completion_id](CompletionsCompletionIdBody payload, map<string|string[]> headers = {}) returns CreateChatCompletionResponse|error {
         string resourcePath = string `/chat/completions/${getEncodedUri(completion_id)}`;
         http:Request request = new;
         json jsonBody = jsondata:toJson(payload);

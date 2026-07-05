@@ -54,6 +54,16 @@ These changes are done in order to improve the overall usability, and as workaro
          `nullable: true`
    - **Reason**: The `top_logprobs` field is optional and can be absent or explicitly set to null. Marking it as `nullable: true` accurately reflects the field's data model, allowing it to represent either an integer value or the absence of a value.
 
+8. **Renamed schemas to Ballerina-friendly type names**:
+
+   - **Changed Schemas**: Only the inline schemas whose generated Ballerina type name was not a valid UpperCamelCase identifier (anonymous inline records the tool already emitted without a name were left unchanged).
+   - **Original**: Inline object schemas the tool named with underscores (`ChatCompletionMessageToolCall_function`, `CompletionUsage_completion_tokens_details`, ...), from a `title` containing spaces (`JSON schema`, `Custom tool properties`), or from an inline request body (`completions_completion_id_body`).
+   - **Updated**:
+      - Extracted the underscore-named inline objects into components with UpperCamelCase names (`ChatCompletionMessageToolCall_function` → `ChatCompletionMessageToolCallFunction`, `completions_completion_id_body` → `CompletionsCompletionIdBody`) and updated every `$ref`.
+      - Replaced the space-bearing `title` values on the relevant inline schemas with UpperCamelCase (`JSON schema` → `JSONSchema`, `Custom tool properties` → `CustomToolProperties`).
+      - Preserved the tool's structural de-duplication (e.g. the assistant message's `function_call` continues to share the `ChatCompletionResponseMessageFunctionCall` type).
+   - **Reason**: Ballerina type names must be valid UpperCamelCase identifiers. Underscores, spaces, and lowercase starts force backslash-escaped or non-idiomatic type names, which hurts the connector's usability.
+
 ## OpenAPI cli command
 
 The following command was used to generate the Ballerina client from the OpenAPI specification. The command should be executed from the repository root directory.
