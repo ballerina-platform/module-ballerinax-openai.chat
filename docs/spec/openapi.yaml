@@ -860,20 +860,21 @@ components:
                 properties:
                   content:
                     description: A list of message content tokens with log probability information.
-                    type: array
+                    type:
+                    - array
+                    - 'null'
                     items:
                       $ref: '#/components/schemas/ChatCompletionTokenLogprob'
-                    nullable: true
                   refusal:
                     description: A list of message refusal tokens with log probability information.
-                    type: array
+                    type:
+                    - array
+                    - 'null'
                     items:
                       $ref: '#/components/schemas/ChatCompletionTokenLogprob'
-                    nullable: true
                 required:
                 - content
                 - refusal
-                nullable: true
         created:
           type: integer
           format: unixtime

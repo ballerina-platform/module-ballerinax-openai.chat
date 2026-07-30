@@ -1,6 +1,6 @@
 _Authors_: @ballerina-platform \
 _Created_: 2024/08/05 \
-_Updated_: 2026/02/27 \
+_Updated_: 2026/07/31 \
 _Edition_: Swan Lake
 
 # Sanitation for OpenAPI specification
@@ -63,6 +63,13 @@ These changes are done in order to improve the overall usability, and as workaro
       - Replaced the space-bearing `title` values on the relevant inline schemas with UpperCamelCase (`JSON schema` → `JSONSchema`, `Custom tool properties` → `CustomToolProperties`).
       - Preserved the tool's structural de-duplication (e.g. the assistant message's `function_call` continues to share the `ChatCompletionResponseMessageFunctionCall` type).
    - **Reason**: Ballerina type names must be valid UpperCamelCase identifiers. Underscores, spaces, and lowercase starts force backslash-escaped or non-idiomatic type names, which hurts the connector's usability.
+
+9. **Made `content` and `refusal` nilable in the `logprobs` object of `CreateChatCompletionResponse` choices**:
+
+   - **Changed Schemas**: `CreateChatCompletionResponse` (inline `choices` item schema, `logprobs` object)
+   - **Original**: The inner `content` and `refusal` array fields used `nullable: true`, and the `logprobs` object itself also had `nullable: true`
+   - **Updated**: Converted `content` and `refusal` to the OpenAPI 3.1 type-array style (`type: [array, 'null']`) and removed `nullable: true` from the `logprobs` object itself
+   - **Reason**: The OpenAI API returns `null` for `content` and `refusal` inside a non-null `logprobs` object. Since this specification is OpenAPI 3.1, the Ballerina OpenAPI tool ignores the 3.0-only `nullable: true` keyword, so the type-array style is required to generate nilable fields (`ChatCompletionTokenLogprob[]?`). The `logprobs` object itself is kept non-nilable and optional (`logprobs?`) for usability.
 
 ## OpenAPI cli command
 

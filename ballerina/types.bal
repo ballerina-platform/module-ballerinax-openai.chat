@@ -499,7 +499,7 @@ public type CreateChatCompletionResponse record {
     # A unique identifier for the chat completion.
     string id;
     # A list of chat completion choices. Can be more than one if `n` is greater than 1.
-    record {"stop"|"length"|"tool_calls"|"content_filter"|"function_call" finish_reason; int index; ChatCompletionResponseMessage message; record {ChatCompletionTokenLogprob[] content; ChatCompletionTokenLogprob[] refusal;} logprobs?;}[] choices;
+    record {"stop"|"length"|"tool_calls"|"content_filter"|"function_call" finish_reason; int index; ChatCompletionResponseMessage message; record {ChatCompletionTokenLogprob[]? content; ChatCompletionTokenLogprob[]? refusal;} logprobs?;}[] choices;
     # The Unix timestamp (in seconds) of when the chat completion was created.
     int created;
     # The model used for the chat completion.
