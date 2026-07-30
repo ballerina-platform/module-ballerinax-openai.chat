@@ -33,18 +33,6 @@ public isolated client class Client {
         self.clientEp = check new (serviceUrl, httpClientConfig);
     }
 
-    # List stored Chat Completions. Only Chat Completions that have been stored
-    # with the `store` parameter set to `true` will be returned.
-    #
-    # + headers - Headers to be sent with the request 
-    # + queries - Queries to be sent with the request 
-    # + return - A list of Chat Completions 
-    resource isolated function get chat/completions(map<string|string[]> headers = {}, *ListChatCompletionsQueries queries) returns ChatCompletionList|error {
-        string resourcePath = string `/chat/completions`;
-        resourcePath = resourcePath + check getPathForQueryParam(queries);
-        return self.clientEp->get(resourcePath, headers);
-    }
-
     # **Starting a new project?** We recommend trying [Responses](/docs/api-reference/responses)
     # to take advantage of the latest OpenAI platform features. Compare
     # [Chat Completions with Responses](/docs/guides/responses-vs-chat-completions?api-mode=responses).
@@ -72,56 +60,5 @@ public isolated client class Client {
         json jsonBody = jsondata:toJson(payload);
         request.setPayload(jsonBody, "application/json");
         return self.clientEp->post(resourcePath, request, headers);
-    }
-
-    # Get a stored chat completion. Only Chat Completions that have been created
-    # with the `store` parameter set to `true` will be returned.
-    #
-    # + completion_id - The ID of the chat completion to retrieve.
-    # + headers - Headers to be sent with the request 
-    # + return - A chat completion 
-    resource isolated function get chat/completions/[string completion_id](map<string|string[]> headers = {}) returns CreateChatCompletionResponse|error {
-        string resourcePath = string `/chat/completions/${getEncodedUri(completion_id)}`;
-        return self.clientEp->get(resourcePath, headers);
-    }
-
-    # Modify a stored chat completion. Only Chat Completions that have been
-    # created with the `store` parameter set to `true` can be modified. Currently,
-    # the only supported modification is to update the `metadata` field.
-    #
-    # + completion_id - The ID of the chat completion to update.
-    # + headers - Headers to be sent with the request 
-    # + return - A chat completion 
-    resource isolated function post chat/completions/[string completion_id](CompletionsCompletionIdBody payload, map<string|string[]> headers = {}) returns CreateChatCompletionResponse|error {
-        string resourcePath = string `/chat/completions/${getEncodedUri(completion_id)}`;
-        http:Request request = new;
-        json jsonBody = jsondata:toJson(payload);
-        request.setPayload(jsonBody, "application/json");
-        return self.clientEp->post(resourcePath, request, headers);
-    }
-
-    # Delete a stored chat completion. Only Chat Completions that have been
-    # created with the `store` parameter set to `true` can be deleted.
-    #
-    # + completion_id - The ID of the chat completion to delete.
-    # + headers - Headers to be sent with the request 
-    # + return - The chat completion was deleted successfully. 
-    resource isolated function delete chat/completions/[string completion_id](map<string|string[]> headers = {}) returns ChatCompletionDeleted|error {
-        string resourcePath = string `/chat/completions/${getEncodedUri(completion_id)}`;
-        return self.clientEp->delete(resourcePath, headers = headers);
-    }
-
-    # Get the messages in a stored chat completion. Only Chat Completions that
-    # have been created with the `store` parameter set to `true` will be
-    # returned.
-    #
-    # + completion_id - The ID of the chat completion to retrieve messages from.
-    # + headers - Headers to be sent with the request 
-    # + queries - Queries to be sent with the request 
-    # + return - A list of messages 
-    resource isolated function get chat/completions/[string completion_id]/messages(map<string|string[]> headers = {}, *GetChatCompletionMessagesQueries queries) returns ChatCompletionMessageList|error {
-        string resourcePath = string `/chat/completions/${getEncodedUri(completion_id)}/messages`;
-        resourcePath = resourcePath + check getPathForQueryParam(queries);
-        return self.clientEp->get(resourcePath, headers);
     }
 }
