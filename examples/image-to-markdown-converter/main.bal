@@ -71,7 +71,7 @@ function generateDocumentation(string base64Image, chat:Client openAIChat) retur
                 ]
             }
         ],
-        max_tokens: 300
+        max_completion_tokens: 300
     };
     chat:CreateChatCompletionResponse response = check openAIChat->/chat/completions.post(request);
     string? markdownDoc = response.choices[0].message.content;

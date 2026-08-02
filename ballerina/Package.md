@@ -80,6 +80,36 @@ public function main() returns error? {
 }
 ```
 
+#### Create a chat completion with a GPT-5 or other reasoning model
+
+GPT-5 and the o-series models do not accept the deprecated `max_tokens` field. Use `max_completion_tokens` instead, which bounds the reasoning tokens and the visible completion tokens together. These models additionally accept `reasoning_effort` and `verbosity`, and they take instructions through a `developer` message rather than a `system` message.
+
+```ballerina
+public function main() returns error? {
+    chat:CreateChatCompletionRequest request = {
+        model: "gpt-5-mini",
+        messages: [
+            {
+                "role": "developer",
+                "content": "You are a helpful assistant."
+            },
+            {
+                "role": "user",
+                "content": "What is Ballerina programming language?"
+            }
+        ],
+        max_completion_tokens: 2048,
+        reasoning_effort: "low",
+        verbosity: "low"
+    };
+
+    chat:CreateChatCompletionResponse response =
+        check openAIChat->/chat/completions.post(request);
+}
+```
+
+> **Note:** Reasoning tokens are billed as completion tokens and are reported separately in `response.usage.completion_tokens_details.reasoning_tokens`. Setting `max_completion_tokens` too low can exhaust the budget on reasoning alone, returning an empty message with `finish_reason` set to `"length"`.
+
 ### Step 4: Run the Ballerina application
 
 ```bash

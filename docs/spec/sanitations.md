@@ -1,6 +1,6 @@
 _Authors_: @ballerina-platform \
 _Created_: 2024/08/05 \
-_Updated_: 2026/07/31 \
+_Updated_: 2026/08/02 \
 _Edition_: Swan Lake
 
 # Sanitation for OpenAPI specification
@@ -9,12 +9,15 @@ This document records the sanitation done on top of the official OpenAPI specifi
 The OpenAPI specification is obtained from the [OpenAPI specification for the OpenAI API](https://app.stainless.com/api/spec/documented/openai/openapi.documented.yml).
 These changes are done in order to improve the overall usability, and as workarounds for some known language limitations.
 
-1. **Converted nullable type arrays to `nullable: true`**:
+1. **Expressed nullability using OpenAPI 3.1 type arrays and enum `null` members**:
 
-   - **Changed Schemas**: Multiple schemas throughout the specification
-   - **Original**: `type: ["string", "null"]` (OpenAPI 3.1.x style)
-   - **Updated**: `type: string` with `nullable: true`
-   - **Reason**: Type arrays are not supported in OpenAPI 3.0.0. The `nullable: true` property is the 3.0.0 equivalent for expressing nullable types.
+   - **Changed Schemas**: Multiple schemas throughout the specification (43 sites)
+   - **Original**: `type: string` with `nullable: true` (OpenAPI 3.0 style)
+   - **Updated**:
+      - Non-enum schemas: `type: [string, 'null']`
+      - Enum schemas: `null` added as an enum member (e.g. `enum: [auto, default, null]`)
+   - **Reason**: This specification declares `openapi: 3.1.0`, and `nullable` is not a keyword in OpenAPI 3.1. The Ballerina OpenAPI tool ignores it, so every field marked this way was generated as non-nilable. The concrete failure was `ChatCompletionTokenLogprob.bytes`, a **required** field that the OpenAI API returns as `null`; it generated as `int[] bytes`, so any `logprobs: true` call could fail data binding. The remaining sites were on optional fields, where the `laxDataBinding` default of `true` silently discards the nulls — they fail only when a user sets `laxDataBinding: false`.
+   - **Note on enums**: the type-array form alone is *not* sufficient for enum schemas. `type: [string, 'null']` combined with `enum:` generates a non-nilable union (`"a"|"b"`), silently dropping the null. Adding `null` as an enum member generates `"a"|"b"?` as intended. This was verified against the tool before applying.
 
 2. **Removed `default: null` properties**:
 
@@ -34,8 +37,10 @@ These changes are done in order to improve the overall usability, and as workaro
 
    - **Changed Schemas**: Multiple schemas using `anyOf`/`oneOf` with `{"type": "null"}`
    - **Original**: `anyOf: [{"type": "string"}, {"type": "null"}]`
-   - **Updated**: `type: string` with `nullable: true`
-   - **Reason**: The `anyOf`/`oneOf` with `{"type": "null"}` pattern for expressing nullable types is not supported in OpenAPI 3.0.0. The `nullable: true` property is used instead.
+   - **Updated**:
+      - Where the union carried no other member: collapsed to the type-array form, `type: [string, 'null']`
+      - Where a genuine union must be preserved (e.g. `ChatCompletionRequestAssistantMessage.content`, `StopConfiguration`): the nullability is expressed on one branch, `oneOf: [{type: [string, 'null']}, {type: array, ...}]`, which generates `string|string[]?`
+   - **Reason**: The Ballerina OpenAPI tool does not recognise `{"type": "null"}` as a union member. A schema written as `anyOf: [{type: array}, {type: 'null'}]` generates `anydata`, discarding the type entirely — this is why the pre-sanitation types were `anydata bytes`, `ServiceTier anydata` and so on. The forms above were verified against the tool before applying.
 
 5. **Removed `webhooks` section**:
 
@@ -45,14 +50,12 @@ These changes are done in order to improve the overall usability, and as workaro
 
    - **Reason**: The `jsonSchemaDialect` key is not supported in OpenAPI 3.0.0.
 
-7. **Added `nullable: true` to `top_logprobs` in `CreateModelResponseProperties`**:
+7. **Kept `top_logprobs`, `temperature` and `top_p` non-nilable to preserve their numeric constraints**:
 
-   - **Changed Schemas**: `CreateModelResponseProperties`
-   - **Updated**:
-      - `top_logprobs:`
-         `// ... other fields omitted for brevity`
-         `nullable: true`
-   - **Reason**: The `top_logprobs` field is optional and can be absent or explicitly set to null. Marking it as `nullable: true` accurately reflects the field's data model, allowing it to represent either an integer value or the absence of a value.
+   - **Changed Schemas**: `ModelResponseProperties`, `CreateModelResponseProperties`, `CreateChatCompletionRequest`
+   - **Original**: `nullable: true` alongside `minimum`/`maximum`
+   - **Updated**: `nullable` removed; `type: integer` / `type: number` retained with their `minimum`/`maximum`
+   - **Reason**: Ballerina rejects a constraint annotation on a nilable type — `@constraint:Int` on `int?` is a compile error (`invalid '@constraint:Int' annotation on 'int?' type`). Both cannot be expressed, so the validation was kept over the nilability. These are optional **request** fields, so a caller omits them rather than sending `null`, and the constraints (`top_logprobs` 0–20, `temperature` 0–2, `top_p` 0–1) carry real value.
 
 8. **Renamed schemas to Ballerina-friendly type names**:
 
@@ -70,6 +73,13 @@ These changes are done in order to improve the overall usability, and as workaro
    - **Original**: The inner `content` and `refusal` array fields used `nullable: true`, and the `logprobs` object itself also had `nullable: true`
    - **Updated**: Converted `content` and `refusal` to the OpenAPI 3.1 type-array style (`type: [array, 'null']`) and removed `nullable: true` from the `logprobs` object itself
    - **Reason**: The OpenAI API returns `null` for `content` and `refusal` inside a non-null `logprobs` object. Since this specification is OpenAPI 3.1, the Ballerina OpenAPI tool ignores the 3.0-only `nullable: true` keyword, so the type-array style is required to generate nilable fields (`ChatCompletionTokenLogprob[]?`). The `logprobs` object itself is kept non-nilable and optional (`logprobs?`) for usability.
+
+10. **Known limits of the nullability conversion in sanitation #1**:
+
+   Two `nullable: true` markers remain in the specification, and a few conversions have no effect on the generated code. Both are tool limitations rather than oversights:
+
+   - **`CreateChatCompletionStreamResponse.usage`** (a `$ref` with a sibling `nullable`) and **`CreateModelResponseProperties.prediction`** (a single-branch `oneOf` over a `$ref`) are left as `nullable: true`. The only way to express these is `oneOf: [{$ref: ...}, {type: 'null'}]`, which the tool generates as `anydata` — losing `CompletionUsage` and `PredictionContent` entirely. Keeping the ignored marker is preferable to degrading the type.
+   - **Inline `object` schemas that declare `properties`** (`web_search_options.user_location`, the request `audio` object, the streaming `logprobs` object) were converted to `type: [object, 'null']` for spec correctness, but the tool does not propagate the null into an inline record type, so the generated fields stay non-nilable. All are optional, and all but the streaming one are request-side. The same schema referenced through a `$ref` *does* generate correctly, which is why the `ChatCompletionStreamOptions` and audio component schemas convert as expected.
 
 ## OpenAPI cli command
 
