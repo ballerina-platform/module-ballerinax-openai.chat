@@ -1,6 +1,6 @@
 _Authors_: @ballerina-platform \
 _Created_: 2024/08/05 \
-_Updated_: 2026/08/02 \
+_Updated_: 2026/08/03 \
 _Edition_: Swan Lake
 
 # Sanitation for OpenAPI specification
@@ -80,6 +80,14 @@ These changes are done in order to improve the overall usability, and as workaro
 
    - **`CreateChatCompletionStreamResponse.usage`** (a `$ref` with a sibling `nullable`) and **`CreateModelResponseProperties.prediction`** (a single-branch `oneOf` over a `$ref`) are left as `nullable: true`. The only way to express these is `oneOf: [{$ref: ...}, {type: 'null'}]`, which the tool generates as `anydata` — losing `CompletionUsage` and `PredictionContent` entirely. Keeping the ignored marker is preferable to degrading the type.
    - **Inline `object` schemas that declare `properties`** (`web_search_options.user_location`, the request `audio` object, the streaming `logprobs` object) were converted to `type: [object, 'null']` for spec correctness, but the tool does not propagate the null into an inline record type, so the generated fields stay non-nilable. All are optional, and all but the streaming one are request-side. The same schema referenced through a `$ref` *does* generate correctly, which is why the `ChatCompletionStreamOptions` and audio component schemas convert as expected.
+
+11. **Removed `default` from request-body parameters so they generate as optional fields**:
+
+   - **Changed Schemas**: `ModelResponseProperties` (`temperature`, `top_p`), `CreateChatCompletionRequest` (`frequency_penalty`, `presence_penalty`, `n`, `logprobs`, `store`, `stream`), `FunctionObject` (`strict`), `ResponseFormatJsonSchema.json_schema` / `JSONSchema` (`strict`)
+   - **Original**: `default: 1` (`temperature`, `top_p`, `n`), `default: 0` (`frequency_penalty`, `presence_penalty`), `default: false` (`logprobs`, `store`, `stream`, `strict`)
+   - **Updated**: Removed the `default` keyword; the `minimum`/`maximum` constraints and the type declarations are unchanged
+   - **Reason**: In Ballerina a field with a default value (`decimal temperature = 1;`) is **not** an optional field — it is always present in the record value. `client.bal` serialises the request with `jsondata:toJson(payload)`, which emits every present field, so **every** chat completion request carried `"temperature":1.0,"top_p":1.0,"frequency_penalty":0,"presence_penalty":0,"n":1,"logprobs":false,"store":false,"stream":false` even when the caller set none of them. The reasoning-model families reject these parameters outright: the o-series (`o1`, `o1-mini`, `o3`, `o3-mini`, `o4-mini`) responds `400 Unsupported parameter: 'temperature' is not supported with this model.` — which fails even for the default value `1` — and GPT-5 rejects `frequency_penalty`/`presence_penalty` and any non-default `temperature`. With the defaults present the connector could not call an o-series model at all. Removing `default` makes the tool generate plain optional fields (`decimal temperature?;`, `decimal? frequency_penalty?;`), which are serialised only when the caller sets them. The official `POST /chat/completions` reference lists all of these as optional with no requirement to send them, so omitting them is spec-conformant and preserves the previous behaviour for the GPT-4 families (the values sent were the API-side defaults anyway).
+   - **Note**: the `default: 0` entries on the **response** schemas (`CompletionUsage`, `CompletionUsageCompletionTokensDetails`, `CompletionUsagePromptTokensDetails`) and `ParallelToolCalls` (`default: true`, referenced only from an already-optional field) were deliberately left in place — they are not serialised onto a request.
 
 ## OpenAPI cli command
 

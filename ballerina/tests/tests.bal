@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/data.jsondata;
 import ballerina/os;
 import ballerina/test;
 
@@ -195,4 +196,31 @@ isolated function testChatCompletionWithCustomToolCall() returns error? {
             test:assertEquals(toolCall.custom.name, "code_exec", msg = "Expected the forced custom tool to be called");
         }
     }
+}
+
+// Guards the sanitation that removed `default:` from the request-body sampling
+// parameters. A parameter the caller never set must not appear in the serialised
+// body: the reasoning models (o-series, gpt-5 family) reject the *presence* of
+// these keys, so a defaulted-but-always-present field made those models
+// uncallable. `jsondata:toJson` is the exact serialiser used by `client.bal`.
+@test:Config {
+    groups: ["mock_tests"]
+}
+isolated function testUnsetRequestParametersAreNotSerialized() returns error? {
+    CreateChatCompletionRequest request = {
+        model: "o3-mini",
+        messages: [{"role": "user", "content": "This is a test message"}]
+    };
+
+    map<json> body = check jsondata:toJson(request).ensureType();
+    foreach string paramName in ["temperature", "top_p", "frequency_penalty", "presence_penalty", "n", "logprobs", "store", "stream"] {
+        test:assertFalse(body.hasKey(paramName),
+                msg = string `Expected '${paramName}' to be omitted when the caller does not set it`);
+    }
+
+    // An explicitly set parameter must still be serialised.
+    request.temperature = 0.2;
+    map<json> bodyWithTemperature = check jsondata:toJson(request).ensureType();
+    test:assertEquals(bodyWithTemperature["temperature"], 0.2d,
+            msg = "Expected an explicitly set temperature to be sent");
 }

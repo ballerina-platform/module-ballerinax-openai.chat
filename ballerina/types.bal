@@ -389,7 +389,7 @@ public type FunctionObject record {
     # Omitting `parameters` defines a function with an empty parameter list.
     FunctionParameters parameters?;
     # Whether to enable strict schema adherence when generating the function call. If set to true, the model will follow the exact schema defined in the `parameters` field. Only a subset of JSON Schema is supported when `strict` is `true`. Learn more about Structured Outputs in the [function calling guide](/docs/guides/function-calling).
-    boolean? strict = false;
+    boolean? strict?;
 };
 
 # JSON Schema response format. Used to generate structured JSON responses.
@@ -409,19 +409,19 @@ public type CreateChatCompletionRequest record {
     Verbosity verbosity?;
     ReasoningEffort reasoning_effort?;
     int? max_completion_tokens?;
-    decimal? frequency_penalty = 0;
-    decimal? presence_penalty = 0;
+    decimal? frequency_penalty?;
+    decimal? presence_penalty?;
     record {record {"approximate" 'type; WebSearchLocation approximate;}? user_location?; WebSearchContextSize search_context_size?;} web_search_options?;
     int top_logprobs?;
     ResponseFormatText|ResponseFormatJsonSchema|ResponseFormatJsonObject response_format?;
     record {VoiceIdsOrCustomVoice voice; "wav"|"aac"|"mp3"|"flac"|"opus"|"pcm16" format;}? audio?;
-    boolean? store = false;
-    boolean? 'stream = false;
+    boolean? store?;
+    boolean? 'stream?;
     StopConfiguration stop?;
     record {|int...;|}? logit_bias?;
-    boolean? logprobs = false;
+    boolean? logprobs?;
     int? max_tokens?;
-    int? n = 1;
+    int? n?;
     PredictionContent prediction?;
     int? seed?;
     ChatCompletionStreamOptions? stream_options?;
@@ -668,7 +668,7 @@ public type ModelResponseProperties record {
     # What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
     # We generally recommend altering this or `top_p` but not both.
     @constraint:Number {minValue: 0, maxValue: 2}
-    decimal temperature = 1;
+    decimal temperature?;
     # An alternative to sampling with temperature, called nucleus sampling,
     # where the model considers the results of the tokens with top_p probability
     # mass. So 0.1 means only the tokens comprising the top 10% probability mass
@@ -676,7 +676,7 @@ public type ModelResponseProperties record {
     # 
     # We generally recommend altering this or `temperature` but not both.
     @constraint:Number {minValue: 0, maxValue: 1}
-    decimal top_p = 1;
+    decimal top_p?;
     # This field is being replaced by `safety_identifier` and `prompt_cache_key`. Use `prompt_cache_key` instead to maintain caching optimizations.
     # A stable identifier for your end-users.
     # Used to boost cache hit rates by better bucketing similar requests and  to help OpenAI detect and prevent abuse. [Learn more](/docs/guides/safety-best-practices#safety-identifiers).
@@ -737,7 +737,7 @@ public type JSONSchema record {
     # in the `schema` field. Only a subset of JSON Schema is supported when
     # `strict` is `true`. To learn more, read the [Structured Outputs
     # guide](/docs/guides/structured-outputs).
-    boolean? strict = false;
+    boolean? strict?;
 };
 
 # A call to a custom tool created by the model.
