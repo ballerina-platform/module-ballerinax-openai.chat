@@ -17,6 +17,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/data.jsondata;
 import ballerina/http;
 
 # The OpenAI REST API. Please see https://platform.openai.com/docs/api-reference for more details.
@@ -28,43 +29,35 @@ public isolated client class Client {
     # + serviceUrl - URL of the target service 
     # + return - An error if connector initialization failed 
     public isolated function init(ConnectionConfig config, string serviceUrl = "https://api.openai.com/v1") returns error? {
-        http:ClientConfiguration httpClientConfig = {auth: config.auth, httpVersion: config.httpVersion, timeout: config.timeout, forwarded: config.forwarded, poolConfig: config.poolConfig, compression: config.compression, circuitBreaker: config.circuitBreaker, retryConfig: config.retryConfig, validation: config.validation};
-        do {
-            if config.http1Settings is ClientHttp1Settings {
-                ClientHttp1Settings settings = check config.http1Settings.ensureType(ClientHttp1Settings);
-                httpClientConfig.http1Settings = {...settings};
-            }
-            if config.http2Settings is http:ClientHttp2Settings {
-                httpClientConfig.http2Settings = check config.http2Settings.ensureType(http:ClientHttp2Settings);
-            }
-            if config.cache is http:CacheConfig {
-                httpClientConfig.cache = check config.cache.ensureType(http:CacheConfig);
-            }
-            if config.responseLimits is http:ResponseLimitConfigs {
-                httpClientConfig.responseLimits = check config.responseLimits.ensureType(http:ResponseLimitConfigs);
-            }
-            if config.secureSocket is http:ClientSecureSocket {
-                httpClientConfig.secureSocket = check config.secureSocket.ensureType(http:ClientSecureSocket);
-            }
-            if config.proxy is http:ProxyConfig {
-                httpClientConfig.proxy = check config.proxy.ensureType(http:ProxyConfig);
-            }
-        }
-        http:Client httpEp = check new (serviceUrl, httpClientConfig);
-        self.clientEp = httpEp;
-        return;
+        http:ClientConfiguration httpClientConfig = {auth: config.auth, httpVersion: config.httpVersion, http1Settings: config.http1Settings, http2Settings: config.http2Settings, timeout: config.timeout, forwarded: config.forwarded, followRedirects: config.followRedirects, poolConfig: config.poolConfig, cache: config.cache, compression: config.compression, circuitBreaker: config.circuitBreaker, retryConfig: config.retryConfig, cookieConfig: config.cookieConfig, responseLimits: config.responseLimits, secureSocket: config.secureSocket, proxy: config.proxy, socketConfig: config.socketConfig, validation: config.validation, laxDataBinding: config.laxDataBinding};
+        self.clientEp = check new (serviceUrl, httpClientConfig);
     }
 
+    # **Starting a new project?** We recommend trying [Responses](/docs/api-reference/responses)
+    # to take advantage of the latest OpenAI platform features. Compare
+    # [Chat Completions with Responses](/docs/guides/responses-vs-chat-completions?api-mode=responses).
+    # 
+    # ---
+    # 
     # Creates a model response for the given chat conversation. Learn more in the
     # [text generation](/docs/guides/text-generation), [vision](/docs/guides/vision),
     # and [audio](/docs/guides/audio) guides.
+    # 
+    # Parameter support can differ depending on the model used to generate the
+    # response, particularly for newer reasoning models. Parameters that are only
+    # supported for reasoning models are noted below. For the current state of
+    # unsupported parameters in reasoning models,
+    # [refer to the reasoning guide](/docs/guides/reasoning).
+    # 
+    # Returns a chat completion object, or a streamed sequence of chat completion
+    # chunk objects if the request is streamed.
     #
     # + headers - Headers to be sent with the request 
     # + return - OK 
     resource isolated function post chat/completions(CreateChatCompletionRequest payload, map<string|string[]> headers = {}) returns CreateChatCompletionResponse|error {
         string resourcePath = string `/chat/completions`;
         http:Request request = new;
-        json jsonBody = payload.toJson();
+        json jsonBody = jsondata:toJson(payload);
         request.setPayload(jsonBody, "application/json");
         return self.clientEp->post(resourcePath, request, headers);
     }

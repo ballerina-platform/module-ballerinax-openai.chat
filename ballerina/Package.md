@@ -13,7 +13,7 @@ The OpenAI Chat connector offers APIs to connect and interact with the chat comp
 
 ## Setup guide
 
-To use the OpenAI Connector, you must have access to the OpenAI API through a [OpenAI Platform account](https://platform.openai.com) and a project under it. If you do not have a OpenAI Platform account, you can sign up for one [here](https://platform.openai.com/signup).
+To use the OpenAI Connector, you must have access to the OpenAI API through an [OpenAI Platform account](https://platform.openai.com) and a project under it. If you do not have a OpenAI Platform account, you can sign up for one [here](https://platform.openai.com/signup).
 
 #### Create a OpenAI API Key
 
@@ -50,7 +50,7 @@ Create a `chat:Client` with the obtained API Key and initialize the connector.
 ```ballerina
 configurable string token = ?;
 
-final chat:Client openAIChat = check new({
+final chat:Client openAIChat = check new ({
     auth: {
         token
     }
@@ -59,25 +59,56 @@ final chat:Client openAIChat = check new({
 
 ### Step 3: Invoke the connector operation
 
-Now, you can utilize available connector operations.
+Now, you can utilize the available connector operation.
 
-#### Generate a response for given message
+#### Create a chat completion
 
 ```ballerina
 public function main() returns error? {
-
-    // Create a chat completion request.
     chat:CreateChatCompletionRequest request = {
         model: "gpt-4o-mini",
-        messages: [{
-            "role": "user",
-            "content": "What is Ballerina programming language?"
-            }]
+        messages: [
+            {
+                "role": "user",
+                "content": "What is Ballerina programming language?"
+            }
+        ]
     };
 
-    chat:CreateChatCompletionResponse response = check openAIChat->/chat/completions.post(request);
+    chat:CreateChatCompletionResponse response =
+        check openAIChat->/chat/completions.post(request);
 }
 ```
+
+#### Create a chat completion with a GPT-5 or other reasoning model
+
+GPT-5 and the o-series models do not accept the deprecated `max_tokens` field. Use `max_completion_tokens` instead, which bounds the reasoning tokens and the visible completion tokens together. These models additionally accept `reasoning_effort` and `verbosity`, and they take instructions through a `developer` message rather than a `system` message.
+
+```ballerina
+public function main() returns error? {
+    chat:CreateChatCompletionRequest request = {
+        model: "gpt-5-mini",
+        messages: [
+            {
+                "role": "developer",
+                "content": "You are a helpful assistant."
+            },
+            {
+                "role": "user",
+                "content": "What is Ballerina programming language?"
+            }
+        ],
+        max_completion_tokens: 2048,
+        reasoning_effort: "low",
+        verbosity: "low"
+    };
+
+    chat:CreateChatCompletionResponse response =
+        check openAIChat->/chat/completions.post(request);
+}
+```
+
+> **Note:** Reasoning tokens are billed as completion tokens and are reported separately in `response.usage.completion_tokens_details.reasoning_tokens`. Setting `max_completion_tokens` too low can exhaust the budget on reasoning alone, returning an empty message with `finish_reason` set to `"length"`.
 
 ### Step 4: Run the Ballerina application
 

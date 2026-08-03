@@ -1,5 +1,5 @@
 [package]
-distribution = "2201.9.3"
+distribution = "2201.12.0"
 org = "ballerinax"
 name = "openai.chat"
 version = "@toml.version@"

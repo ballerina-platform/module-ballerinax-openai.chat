@@ -1,11 +1,11 @@
 [package]
-distribution = "2201.9.3"
+distribution = "2201.12.0"
 org = "ballerinax"
 name = "openai.chat"
-version = "4.0.1"
+version = "5.0.0"
 license = ["Apache-2.0"]
 authors = ["Ballerina"]
-keywords = ["AI/Chat", "Cost/Paid", "GPT-4", "ChatGPT", "Vendor/OpenAI", "Area/AI", "Type/Connector"]
+keywords = ["AI/Chat", "Cost/Paid", "GPT-4", "ChatGPT", "Vendor/OpenAI", "Area/AI & Machine Learning", "Type/Connector"]
 icon = "icon.png"
 repository = "https://github.com/ballerina-platform/module-ballerinax-openai.chat"
 

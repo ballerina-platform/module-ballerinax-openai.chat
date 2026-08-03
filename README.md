@@ -1,7 +1,7 @@
 # Ballerina OpenAI Chat connector
 
 [![Build](https://github.com/ballerina-platform/module-ballerinax-openai.chat/actions/workflows/ci.yml/badge.svg)](https://github.com/ballerina-platform/module-ballerinax-openai.chat/actions/workflows/ci.yml)
-[![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/module-ballerinax-openai.chat.svg)](https://github.com/ballerina-platform/module-ballerinax-openai.chat/commits/master)
+[![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/module-ballerinax-openai.chat.svg)](https://github.com/ballerina-platform/module-ballerinax-openai.chat/commits/main)
 [![GitHub Issues](https://img.shields.io/github/issues/ballerina-platform/ballerina-library/module/openai.chat.svg?label=Open%20Issues)](https://github.com/ballerina-platform/ballerina-library/labels/module%openai.chat)
 
 ## Overview
@@ -12,7 +12,7 @@ The `ballarinax/openai.chat` package offers functionality to connect and interac
 
 ## Setup guide
 
-To use the OpenAI Connector, you must have access to the OpenAI API through a [OpenAI Platform account](https://platform.openai.com) and a project under it. If you do not have a OpenAI Platform account, you can sign up for one [here](https://platform.openai.com/signup).
+To use the OpenAI Connector, you must have access to the OpenAI API through an [OpenAI Platform account](https://platform.openai.com) and a project under it. If you do not have a OpenAI Platform account, you can sign up for one [here](https://platform.openai.com/signup).
 
 #### Create a OpenAI API Key
 
@@ -79,6 +79,38 @@ public function main() returns error? {
 }
 ```
 
+#### Generate a response using a GPT-5 or other reasoning model
+
+GPT-5 and the o-series models do not accept the deprecated `max_tokens` field. Use `max_completion_tokens` instead, which bounds the reasoning tokens and the visible completion tokens together. These models additionally accept `reasoning_effort` and `verbosity`, and they take instructions through a `developer` message rather than a `system` message.
+
+```ballerina
+
+public function main() returns error? {
+
+    // Create a chat completion request for a reasoning model.
+    chat:CreateChatCompletionRequest request = {
+        model: "gpt-5-mini",
+        messages: [
+            {
+                "role": "developer",
+                "content": "You are a helpful assistant."
+            },
+            {
+                "role": "user",
+                "content": "What is Ballerina programming language?"
+            }
+        ],
+        max_completion_tokens: 2048,
+        reasoning_effort: "low",
+        verbosity: "low"
+    };
+
+    chat:CreateChatCompletionResponse response = check openAIChat->/chat/completions.post(request);
+}
+```
+
+> **Note:** Reasoning tokens are billed as completion tokens and are reported separately in `response.usage.completion_tokens_details.reasoning_tokens`. Setting `max_completion_tokens` too low can exhaust the budget on reasoning alone, returning an empty message with `finish_reason` set to `"length"`.
+
 ### Step 4: Run the Ballerina application
 
 ```bash
@@ -109,7 +141,7 @@ The `OpenAI Chat` connector provides practical examples illustrating usage in va
 
    > **Note**: Ensure that the Docker daemon is running before executing any tests.
 
-4. Export Github Personal access token with read package permissions as follows,
+4. Export GitHub Personal access token with read package permissions as follows,
 
     ```bash
     export packageUser=<Username>
