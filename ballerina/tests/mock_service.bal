@@ -19,8 +19,28 @@ import ballerina/log;
 
 listener http:Listener httpListener = new (9090);
 
+isolated json lastRequestBody = ();
+
+isolated function setLastRequestBody(json body) {
+    lock {
+        lastRequestBody = body.clone();
+    }
+}
+
+isolated function getLastRequestBody() returns json {
+    lock {
+        return lastRequestBody.clone();
+    }
+}
+
 http:Service mockService = service object {
-    resource function post chat/completions(@http:Payload CreateChatCompletionRequest payload) returns CreateChatCompletionResponse|http:BadRequest {
+    resource function post chat/completions(@http:Payload json rawPayload) returns CreateChatCompletionResponse|http:BadRequest {
+        setLastRequestBody(rawPayload);
+        CreateChatCompletionRequest|error binding = rawPayload.cloneWithType();
+        if binding is error {
+            return http:BAD_REQUEST;
+        }
+        CreateChatCompletionRequest payload = binding;
 
         // Validate the request payload
         if payload.messages.length() == 0 || payload.model.toString() is "" {
