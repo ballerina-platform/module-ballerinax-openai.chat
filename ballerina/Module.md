@@ -1,8 +1,6 @@
 ## Overview
 
-[OpenAI](https://openai.com/), an AI research organization focused on creating friendly AI for humanity, offers the [OpenAI API](https://platform.openai.com/docs/api-reference/introduction) to access its powerful AI models for tasks like natural language processing and image generation.
-
-The `ballerinax/openai.chat` package offers functionality to connect and interact with the [Chat Completions endpoint of the OpenAI REST API](https://platform.openai.com/docs/api-reference/chat/create). This enables seamless integration with OpenAI's chat models for conversational and text generation tasks.
+The `openai.chat` module is a direct, fully-typed REST connector for OpenAI's [Chat Completions API](https://platform.openai.com/docs/api-reference/chat) (`POST /chat/completions`). Use it as a standalone client to send chat prompts to GPT models (GPT-4o, GPT-4, GPT-3.5) and receive completions with full control over request parameters such as tools, temperature, and structured response formats — independent of the `ballerina/ai` agent framework.
 
 
 ### Key Features

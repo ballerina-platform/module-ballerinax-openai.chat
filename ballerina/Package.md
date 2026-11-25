@@ -1,8 +1,6 @@
 ## Overview
 
-[OpenAI](https://openai.com/) offers powerful AI models for tasks like natural language processing, audio transcription, and image generation.
-
-The OpenAI Chat connector offers APIs to connect and interact with the chat completion related endpoints of the OpenAI REST API, enabling seamless interaction with advanced GPT models for diverse conversational and text generation tasks.
+The `openai.chat` module is a direct, fully-typed REST connector for OpenAI's [Chat Completions API](https://platform.openai.com/docs/api-reference/chat) (`POST /chat/completions`). Use it as a standalone client to send chat prompts to GPT models (GPT-4o, GPT-4, GPT-3.5) and receive completions with full control over request parameters such as tools, temperature, and structured response formats — independent of the `ballerina/ai` agent framework.
 
 ### Key Features
 - Integration with advanced GPT models including GPT-4o, GPT-4, and GPT-3.5
