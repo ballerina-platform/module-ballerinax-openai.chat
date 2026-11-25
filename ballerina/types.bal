@@ -152,9 +152,10 @@ public type ChatCompletionRequestToolMessageContentPart ChatCompletionRequestMes
 # Provides a set of configurations for controlling the behaviours when communicating with a remote HTTP endpoint.
 @display {label: "Connection Config"}
 public type ConnectionConfig record {|
-    # Configurations related to client authentication. When not set, the client adds no `Authorization` header,
-    # so pass it in the `headers` of each request instead, for example a short-lived access token that changes
-    # between requests
+    # Configurations related to client authentication. When set, the client sends this token in the
+    # `Authorization` header of every request and replaces any `Authorization` header passed in `headers`.
+    # When not set, the client adds no `Authorization` header, so pass it in the `headers` of each request
+    # instead, for example a short-lived access token that changes between requests
     http:BearerTokenConfig auth?;
     # The HTTP version understood by the client
     http:HttpVersion httpVersion = http:HTTP_2_0;

@@ -224,3 +224,65 @@ isolated function testUnsetRequestParametersAreNotSerialized() returns error? {
     test:assertEquals(bodyWithTemperature["temperature"], 0.2d,
             msg = "Expected an explicitly set temperature to be sent");
 }
+
+// The mock at `/auth` returns the `Authorization` header it received as the message content.
+final string authorizationEchoUrl = mockServiceUrl + "/auth";
+
+isolated function sentAuthorization(Client openAIChat, map<string|string[]> headers = {}) returns string|error {
+    CreateChatCompletionRequest request = {
+        model: "gpt-4o-mini",
+        messages: [{"role": "user", "content": "This is a test message"}]
+    };
+    CreateChatCompletionResponse response = check openAIChat->/chat/completions.post(request, headers);
+    return response.choices[0].message?.content.ensureType();
+}
+
+@test:Config {
+    groups: ["mock_tests"]
+}
+function testClientWithoutAuthSendsAuthorizationFromHeaders() returns error? {
+    if isLiveServer {
+        return;
+    }
+    Client openAIChat = check new ({}, authorizationEchoUrl);
+    string sent = check sentAuthorization(openAIChat, {"Authorization": "Bearer dynamic-token"});
+    test:assertEquals(sent, "Bearer dynamic-token");
+}
+
+@test:Config {
+    groups: ["mock_tests"]
+}
+function testClientWithoutAuthSendsEachRequestsToken() returns error? {
+    if isLiveServer {
+        return;
+    }
+    // A short-lived access token, such as one from workload identity federation, changes between requests.
+    Client openAIChat = check new ({}, authorizationEchoUrl);
+    test:assertEquals(check sentAuthorization(openAIChat, {"Authorization": "Bearer token-1"}), "Bearer token-1");
+    test:assertEquals(check sentAuthorization(openAIChat, {"Authorization": "Bearer token-2"}), "Bearer token-2");
+}
+
+@test:Config {
+    groups: ["mock_tests"]
+}
+function testClientWithoutAuthOrHeaderSendsNoAuthorization() returns error? {
+    if isLiveServer {
+        return;
+    }
+    Client openAIChat = check new ({}, authorizationEchoUrl);
+    test:assertEquals(check sentAuthorization(openAIChat), NO_AUTHORIZATION_HEADER);
+}
+
+@test:Config {
+    groups: ["mock_tests"]
+}
+function testAuthOverwritesAuthorizationFromHeaders() returns error? {
+    if isLiveServer {
+        return;
+    }
+    // With `auth` set, the bearer token handler replaces an `Authorization` header passed in `headers`.
+    Client openAIChat = check new ({auth: {token: "static-token"}}, authorizationEchoUrl);
+    test:assertEquals(check sentAuthorization(openAIChat, {"Authorization": "Bearer dynamic-token"}),
+            "Bearer static-token");
+    test:assertEquals(check sentAuthorization(openAIChat), "Bearer static-token");
+}

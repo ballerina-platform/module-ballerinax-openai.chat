@@ -148,6 +148,34 @@ http:Service mockService = service object {
     }
 };
 
+const NO_AUTHORIZATION_HEADER = "<no Authorization header>";
+
+// Returns the `Authorization` header of the request as the message content, so that the tests can check which
+// header the client sent.
+http:Service authorizationEchoService = service object {
+    resource function post chat/completions(http:Request request) returns CreateChatCompletionResponse {
+        string|http:HeaderNotFoundError authorization = request.getHeader("Authorization");
+        return {
+            id: "chatcmpl-auth-00000",
+            choices: [
+                {
+                    finish_reason: "stop",
+                    index: 0,
+                    message: {
+                        "content": authorization is string ? authorization : NO_AUTHORIZATION_HEADER,
+                        "role": "assistant",
+                        "refusal": null
+                    },
+                    logprobs: null
+                }
+            ],
+            created: 1723091495,
+            model: "gpt-4o-mini-2024-07-18",
+            "object": "chat.completion"
+        };
+    }
+};
+
 function init() returns error? {
     if isLiveServer {
         log:printInfo("Skiping mock server initialization as the tests are running on live server");
@@ -156,5 +184,6 @@ function init() returns error? {
 
     log:printInfo("Initiating mock server...");
     check httpListener.attach(mockService, "/");
+    check httpListener.attach(authorizationEchoService, "/auth");
     check httpListener.'start();
 }

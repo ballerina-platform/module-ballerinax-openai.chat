@@ -8,7 +8,7 @@ The OpenAI Chat connector offers APIs to connect and interact with the chat comp
 - Integration with advanced GPT models including GPT-4o, GPT-4, and GPT-3.5
 - Support for structured chat completions and interactive dialogues
 - Efficient handling of conversational history and message roles
-- Secure communication with API key-based authentication
+- Secure communication with API key-based authentication, or with an access token passed in each request
 - Simplified management of complex model parameters and response streams
 
 ## Setup guide
@@ -55,6 +55,16 @@ final chat:Client openAIChat = check new ({
         token
     }
 });
+```
+
+If the token changes between requests, for example a short-lived access token from OpenAI workload identity federation, leave out `auth` and pass the full `Authorization` header value in the `headers` of each request. When `auth` is set, the client replaces any `Authorization` header passed in `headers` with its own token. A client with neither sends requests without authentication, which OpenAI rejects with a `401` response.
+
+```ballerina
+final chat:Client openAIChat = check new ({});
+
+// In the function that makes the request:
+chat:CreateChatCompletionResponse response = check openAIChat->/chat/completions.post(request,
+    headers = {"Authorization": "Bearer " + accessToken});
 ```
 
 ### Step 3: Invoke the connector operation

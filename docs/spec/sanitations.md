@@ -92,7 +92,7 @@ These changes are done in order to improve the overall usability, and as workaro
 12. **Made the `auth` field of `ConnectionConfig` optional (post-generation change to `types.bal` and `client.bal`)**:
 
    - **Original**: `http:BearerTokenConfig auth;`, passed to the HTTP client as `auth: config.auth`
-   - **Updated**: `http:BearerTokenConfig auth?;`. `client.bal` sets `httpClientConfig.auth` only when `auth` is set
+   - **Updated**: `http:BearerTokenConfig auth?;`. `client.bal` sets `httpClientConfig.auth` only when `auth` is set. The doc comment of `auth` explains both cases: when set, it replaces any `Authorization` header passed in `headers`; when not set, the caller passes the `Authorization` header in `headers`
    - **Reason**: With `auth` set, the HTTP client's bearer token handler overwrites the `Authorization` header on every request with the token given at initialization, so a caller cannot send a token that changes over time, such as a short-lived access token from OpenAI workload identity federation, through the `headers` parameter. When `auth` is not set, no handler is installed and the `Authorization` header passed in `headers` is sent as is. Existing callers that set `auth` are not affected.
    - **Note**: This is not a change to the OpenAPI specification. The OpenAPI tool always generates `auth` as a required field when the specification declares an `http` or `oauth2` security scheme, so this change must be applied again after regenerating the client.
 
